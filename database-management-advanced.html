@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Database Management - Hotel System</title>
+    
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --dark-bg: #1a1a1a;
+            --dark-surface: #2d2d2d;
+            --dark-text: #ffffff;
+            --light-bg: #ffffff;
+            --light-surface: #f8f9fa;
+            --light-text: #333333;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: var(--dark-bg);
+            --surface-color: var(--dark-surface);
+            --text-color: var(--dark-text);
+        }
+
+        [data-theme="light"] {
+            --bg-color: var(--light-bg);
+            --surface-color: var(--light-surface);
+            --text-color: var(--light-text);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-color) 0%, var(--surface-color) 100%);
+        }
+
+        .header-bar {
+            background: var(--surface-color);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: var(--surface-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .sql-editor-container {
+            background: var(--surface-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .CodeMirror {
+            height: 300px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .action-btn {
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .result-container {
+            background: var(--surface-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: 2px solid transparent;
+            color: var(--text-color);
+            font-weight: 600;
+            margin-right: 0.5rem;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-online { background: var(--success-color); }
+        .status-warning { background: var(--warning-color); }
+        .status-offline { background: var(--danger-color); }
+
+        .log-container {
+            background: #000;
+            color: #00ff00;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+        
+        .db-type-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .db-mysql { background: #4479A1; }
+        .db-postgresql { background: #336791; }
+        .db-sqlite { background: #003B57; }
+        .db-mssql { background: #CC2927; }
+        .db-mongodb { background: #4DB33D; }
+        
+        .connection-preview {
+            background: var(--surface-color);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .setup-guide {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .setup-guide h6 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        
+        .setup-guide ul {
+            margin-bottom: 0;
+        }
+        
+        .saved-connection-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .saved-connection-card:hover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .connection-status-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .status-recent { background: #27ae60; color: white; }
+        .status-old { background: #95a5a6; color: white; }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Alert Container -->
+    <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1060"></div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <div class="main-container">
+        <div class="header-bar">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h1 class="mb-0"><i class="fas fa-database"></i> Advanced Database Management</h1>
+                        <small class="text-muted">Hotel Management System - Pro Version</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <button class="btn btn-primary btn-sm me-2" onclick="showConnectionModal()">
+                            <i class="fas fa-plug"></i> Connect Database
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="showSavedConnections()">
+                            <i class="fas fa-bookmark"></i> Saved Connections
+                        </button>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="status-indicator status-offline" id="connection-indicator"></span>
+                        <span id="connection-status">Not Connected</span>
+                        <span class="ms-3">Server: <strong id="server-info">-</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Connection Modal -->
+        <div class="modal fade" id="connectionModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: var(--surface-color); color: var(--text-color);">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-database"></i> Database Connection
+                            <span id="connection-type-indicator"></span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="connectionForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Connection Name</label>
+                                    <input type="text" class="form-control" id="conn-name" placeholder="Auto-generated">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Database Type</label>
+                                    <select class="form-select" id="db-type" onchange="updateConnectionForm()">
+                                        <option value="mysql">MySQL / MariaDB</option>
+                                        <option value="postgresql">PostgreSQL</option>
+                                        <option value="sqlite">SQLite</option>
+                                        <option value="mssql">SQL Server</option>
+                                        <option value="mongodb">MongoDB</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="server-fields">
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label">Host/Server</label>
+                                        <input type="text" class="form-control" id="db-host" value="localhost" 
+                                               onchange="updateConnectionPreview()">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Port</label>
+                                        <input type="number" class="form-control" id="db-port" value="3306"
+                                               onchange="updateConnectionPreview()">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Database Name</label>
+                                    <input type="text" class="form-control" id="db-name" placeholder="hotel_db"
+                                           onchange="updateConnectionPreview()">
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="db-username" value="root"
+                                               onchange="updateConnectionPreview()">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="db-password"
+                                               onchange="updateConnectionPreview()">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="sqlite-fields" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">SQLite Database File</label>
+                                    <input type="text" class="form-control" id="sqlite-file" 
+                                           placeholder="C:\path\to\database.db" onchange="updateConnectionPreview()">
+                                    <small class="text-muted">Enter full path to your SQLite database file</small>
+                                </div>
+                            </div>
+                            
+                            <div id="mongodb-fields" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">MongoDB Connection String</label>
+                                    <input type="text" class="form-control" id="mongodb-uri" 
+                                           placeholder="mongodb://localhost:27017/hotel_db" onchange="updateConnectionPreview()">
+                                    <small class="text-muted">Format: mongodb://[username:password@]host[:port]/database</small>
+                                </div>
+                            </div>
+
+                            <!-- Connection Preview -->
+                            <div class="connection-preview" id="connection-preview">
+                                <strong>Connection String Preview:</strong><br>
+                                <span id="preview-text">mysql://root@localhost:3306/hotel_db</span>
+                            </div>
+
+                            <!-- Setup Guide -->
+                            <div class="setup-guide" id="setup-guide">
+                                <h6><i class="fas fa-info-circle"></i> MySQL Setup Guide</h6>
+                                <ol>
+                                    <li>Install MySQL Server or XAMPP/WAMP</li>
+                                    <li>Start MySQL service</li>
+                                    <li>Create database: <code>CREATE DATABASE hotel_db;</code></li>
+                                    <li>Create user (optional): <code>CREATE USER 'hotel_user'@'localhost' IDENTIFIED BY 'password';</code></li>
+                                    <li>Grant privileges: <code>GRANT ALL PRIVILEGES ON hotel_db.* TO 'hotel_user'@'localhost';</code></li>
+                                </ol>
+                            </div>
+                            
+                            <!-- Connection Error Display -->
+                            <div id="connection-error" class="alert alert-danger" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Connection Error:</strong>
+                                <div id="error-message"></div>
+                                <div id="error-solutions" class="mt-2"></div>
+                            </div>
+                        </form>
+                    </div>                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="window.testConnection()">
+                        <i class="fas fa-vial"></i> Test Connection
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="window.connectDatabase()">
+                        <i class="fas fa-plug"></i> Connect
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Connections Modal -->
+        <div class="modal fade" id="savedConnectionsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" style="background: var(--surface-color); color: var(--text-color);">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-bookmark"></i> Saved Connections
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="saved-connections-list">
+                            <div class="text-center p-4">
+                                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                <p>Loading saved connections...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="loadSavedConnections()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid">
+            <!-- Real-time Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card text-center">
+                        <i class="fas fa-table fa-2x text-primary mb-2"></i>
+                        <h3 id="table-count">-</h3>
+                        <p class="mb-0">Total Tables</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center">
+                        <i class="fas fa-database fa-2x text-success mb-2"></i>
+                        <h3 id="db-size">-</h3>
+                        <p class="mb-0">Database Size</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center">
+                        <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                        <h3 id="active-connections">-</h3>
+                        <p class="mb-0">Active Connections</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center">
+                        <i class="fas fa-server fa-2x text-info mb-2"></i>
+                        <h3 id="db-type-display">-</h3>
+                        <p class="mb-0">Database Type</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Navigation Tabs -->
+            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="sql-tab" data-bs-toggle="tab" href="#sql-editor" role="tab">
+                        <i class="fas fa-code"></i> SQL Editor
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tables-tab" data-bs-toggle="tab" href="#table-manager" role="tab">
+                        <i class="fas fa-table"></i> Table Manager
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#file-manager" role="tab">
+                        <i class="fas fa-folder"></i> File Manager
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="performance-tab" data-bs-toggle="tab" href="#performance-monitor" role="tab">
+                        <i class="fas fa-chart-line"></i> Performance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="backup-tab" data-bs-toggle="tab" href="#backup-restore" role="tab">
+                        <i class="fas fa-save"></i> Backup/Restore
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="mainTabContent">
+                <!-- SQL Editor Tab -->
+                <div class="tab-pane fade show active" id="sql-editor" role="tabpanel">
+                    <div class="sql-editor-container">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <h4><i class="fas fa-code"></i> SQL Query Editor</h4>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="action-btn btn btn-secondary" onclick="formatSQL()">
+                                    <i class="fas fa-magic"></i> Format
+                                </button>
+                                <button class="action-btn btn btn-warning" onclick="clearEditor()">
+                                    <i class="fas fa-trash"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <textarea id="sql-editor-textarea" placeholder="-- Enter your SQL query here..."></textarea>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-8">
+                                <button class="action-btn btn btn-success" onclick="executeQuery()">
+                                    <i class="fas fa-play"></i> Execute Query
+                                </button>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <small class="text-muted">Execution Time: <span id="exec-time">0ms</span></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-container" id="query-results">
+                        <h5><i class="fas fa-table"></i> Query Results</h5>
+                        <div id="results-content">
+                            <p class="text-muted">Execute a query to see results here...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Manager Tab -->
+                <div class="tab-pane fade" id="table-manager" role="tabpanel">
+                    <div class="table-manager">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-table"></i> Table Management</h4>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="action-btn btn btn-success" onclick="createTable()">
+                                    <i class="fas fa-plus"></i> Create Table
+                                </button>
+                                <button class="action-btn btn btn-info" onclick="refreshTables()">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="list-group" id="tables-list">
+                                    <div class="text-center p-3">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p class="mt-2">Loading tables...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div id="table-details">
+                                    <p class="text-muted">Select a table to view details...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Manager Tab -->
+                <div class="tab-pane fade" id="file-manager" role="tabpanel">
+                    <div class="file-manager">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-folder"></i> SQL File Manager</h4>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="action-btn btn btn-success" onclick="uploadFile()">
+                                    <i class="fas fa-upload"></i> Upload SQL
+                                </button>
+                                <button class="action-btn btn btn-primary" onclick="createNewFile()">
+                                    <i class="fas fa-file-plus"></i> New File
+                                </button>
+                                <button class="action-btn btn btn-info" onclick="refreshFiles()">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>SQL Files</h5>
+                                <div id="file-list" class="list-group">
+                                    <div class="text-center p-3">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p class="mt-2">Loading files...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>File Preview</h5>
+                                <div id="file-preview" style="background: var(--surface-color); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 5px; min-height: 400px; font-family: 'Courier New', monospace;">
+                                    <p class="text-muted">Select a file to preview...</p>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-primary" onclick="executeFileQuery()" id="execute-file-btn" style="display: none;">
+                                        <i class="fas fa-play"></i> Execute File
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" onclick="loadFileToEditor()" id="load-file-btn" style="display: none;">
+                                        <i class="fas fa-edit"></i> Load to Editor
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Monitor Tab -->
+                <div class="tab-pane fade" id="performance-monitor" role="tabpanel">
+                    <div class="performance-monitor">
+                        <h4><i class="fas fa-chart-line"></i> Performance Monitor</h4>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <h6>CPU Usage</h6>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-success" id="cpu-usage" style="width: 0%"></div>
+                                    </div>
+                                    <small id="cpu-text">0%</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <h6>Memory Usage</h6>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-warning" id="memory-usage" style="width: 0%"></div>
+                                    </div>
+                                    <small id="memory-text">0%</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <h6>Disk I/O</h6>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-info" id="disk-usage" style="width: 0%"></div>
+                                    </div>
+                                    <small id="disk-text">0%</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <h6>Cache Hit Ratio</h6>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-primary" id="cache-ratio" style="width: 95%"></div>
+                                    </div>
+                                    <small id="cache-text">95%</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="stats-card">
+                                    <h5>Query Performance</h5>
+                                    <div id="query-stats-table" class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Query Type</th>
+                                                    <th>Count</th>
+                                                    <th>Avg Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="query-stats-body">
+                                                <tr><td colspan="3" class="text-center text-muted">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="stats-card">
+                                    <h5>System Log</h5>
+                                    <div class="log-container" id="system-log">
+                                        <div>System initialized...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup/Restore Tab -->
+                <div class="tab-pane fade" id="backup-restore" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stats-card">
+                                <h4><i class="fas fa-download"></i> Database Backup</h4>
+                                <form id="backup-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">Backup Name:</label>
+                                        <input type="text" class="form-control" id="backup-name" 
+                                               value="backup_<?= date('Y_m_d_H_i_s') ?>" placeholder="backup_2024_01_01">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Backup Type:</label>
+                                        <select class="form-select" id="backup-type">
+                                            <option value="full">Full Backup (Schema + Data)</option>
+                                            <option value="schema">Schema Only</option>
+                                            <option value="data">Data Only</option>
+                                            <option value="custom">Custom Tables</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="tables-selection" style="display: none;">
+                                        <label class="form-label">Select Tables:</label>
+                                        <select class="form-select" id="backup-tables" multiple>
+                                            <!-- Tables will be loaded here -->
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="compress-backup">
+                                            <label class="form-check-label" for="compress-backup">
+                                                Compress backup file
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="action-btn btn btn-success w-100" onclick="createBackup()">
+                                        <i class="fas fa-download"></i> Create Backup
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-card">
+                                <h4><i class="fas fa-upload"></i> Database Restore</h4>
+                                <form id="restore-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Backup File:</label>
+                                        <input type="file" class="form-control" id="restore-file" accept=".sql,.zip">
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="drop-existing">
+                                            <label class="form-check-label" for="drop-existing">
+                                                Drop existing tables before restore
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ignore-errors">
+                                            <label class="form-check-label" for="ignore-errors">
+                                                Continue on errors
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="action-btn btn btn-danger w-100" onclick="restoreBackup()">
+                                        <i class="fas fa-upload"></i> Restore Database
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="stats-card">
+                                <h5>Available Backups</h5>
+                                <div id="backup-list" class="list-group">
+                                    <div class="text-center p-3">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p class="mt-2">Loading backups...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--surface-color); color: var(--text-color);">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-upload"></i> Upload SQL File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" class="form-control" id="file-upload" accept=".sql" multiple>
+                    <small class="text-muted mt-2 d-block">Supported formats: .sql</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="performUpload()">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+function testConnection() {
+    console.log('Test connection function called');
+    const config = getConnectionConfig();
+    if (!config) {
+        console.log('Config validation failed');
+        showAlert('Please fill in all required fields', 'warning');
+        return;
+    }
+    const testBtn = event ? event.target : document.querySelector('button[onclick*="testConnection"]');
+    if (!testBtn) {
+        console.error('Test button not found');
+        showAlert('Button error', 'danger');
+        return;
+    }
+    const originalText = testBtn.innerHTML;
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    testBtn.disabled = true;
+    hideConnectionError();
+    console.log('Sending test request to:', `${API_BASE}?action=test-connection`);
+    console.log('Config:', config);
+    fetch(`${API_BASE}?action=test-connection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(config)
+    })
+    .then(response => {
+        console.log('Test Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        console.log('Raw test response:', text);
+        try {
+            const data = JSON.parse(text);
+            console.log('Parsed test response:', data);
+            if (data.success) {
+                showAlert('✅ Connection test successful!', 'success');
+                if (data.server_info) {
+                    showAlert(`Server: ${data.server_info}`, 'info');
+                }
+            } else {
+                showConnectionError(data.message);
+                showAlert('❌ Connection test failed: ' + data.message, 'danger');
+            }
+        } catch (parseError) {
+            console.error('JSON parse error:', parseError);
+            showConnectionError('Invalid server response: ' + text);
+            showAlert('❌ Server response error', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Connection Test Error:', error);
+        showConnectionError('Network error: ' + error.message);
+        showAlert('❌ Connection test failed: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    });
+}
+
+function connectDatabase() {
+    console.log('Connect database function called');
+    const config = getConnectionConfig();
+    if (!config) {
+        console.log('Config validation failed');
+        showAlert('Please fill in all required fields', 'warning');
+        return;
+    }
+    const connectBtn = event ? event.target : document.querySelector('button[onclick*="connectDatabase"]');
+    if (!connectBtn) {
+        console.error('Connect button not found');
+        showAlert('Button error', 'danger');
+        return;
+    }
+    const originalText = connectBtn.innerHTML;
+    connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+    connectBtn.disabled = true;
+    hideConnectionError();
+    console.log('Sending connect request to:', `${API_BASE}?action=connect-database`);
+    console.log('Config:', config);
+    fetch(`${API_BASE}?action=connect-database`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(config)
+    })
+    .then(response => {
+        console.log('Connect Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        console.log('Raw connect response:', text);
+        try {
+            const data = JSON.parse(text);
+            console.log('Parsed connect response:', data);
+            if (data.success) {
+                currentConnection = data.connection_id;
+                isConnected = true;
+                updateConnectionStatus(true, config, data.server_info);
+                showAlert('✅ Database connected successfully!', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('connectionModal'));
+                if (modal) { modal.hide(); }                        loadDatabaseInfo();
+                        
+                        // Ekstra: 2 saniye sonra tekrar dene
+                        setTimeout(() => {
+                            console.log('Retry loading database info...');
+                            fetch(`${API_BASE}?action=database-info`)
+                                .then(response => response.json())
+                                .then(infoData => {
+                                    console.log('Retry info response:', infoData);
+                                    if (infoData.success && infoData.data) {
+                                        updateDatabaseStats(infoData.data);
+                                        showAlert('📊 Database statistics loaded', 'info');
+                                    }
+                                })
+                                .catch(err => console.error('Retry failed:', err));
+                        }, 2000);
+                    } else {
+                        showConnectionError(data.message);
+                        showAlert('❌ Connection failed: ' + data.message, 'danger');
+                    }
+            } else {
+                showConnectionError(data.message);
+                showAlert('❌ Connection failed: ' + data.message, 'danger');
+            }                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    showConnectionError('Invalid server response: ' + text);
+                    showAlert('❌ Server response error', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Database Connect Error:', error);
+                showConnectionError('Network error: ' + error.message);
+                showAlert('❌ Connection failed: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                connectBtn.innerHTML = originalText;
+                connectBtn.disabled = false;
+            });
+        }
+        let sqlEditor;
+        let currentTheme = 'light';
+        let currentConnection = null;        let isConnected = false;
+        const API_BASE = 'backend/api/database-simple.php';
+
+        console.log('=== JavaScript Starting ===');
+        console.log('Variables initialized');
+        console.log('API_BASE:', API_BASE);
+
+        // Database type configurations
+        const dbConfigs = {
+            mysql: {
+                name: 'MySQL Database',
+                port: 3306,
+                username: 'root',
+                icon: 'M',
+                color: 'db-mysql',
+                placeholder_db: 'hotel_db'
+            },
+            postgresql: {
+                name: 'PostgreSQL Database',
+                port: 5432,
+                username: 'postgres',
+                icon: 'P',
+                color: 'db-postgresql',
+                placeholder_db: 'hotel_db'
+            },
+            sqlite: {
+                name: 'SQLite Database',
+                icon: 'S',
+                color: 'db-sqlite'
+            },
+            mssql: {
+                name: 'SQL Server Database',
+                port: 1433,
+                username: 'sa',
+                icon: 'MS',
+                color: 'db-mssql',
+                placeholder_db: 'hotel_db'
+            },
+            mongodb: {
+                name: 'MongoDB Database',
+                port: 27017,
+                username: '',
+                icon: 'M',
+                color: 'db-mongodb',
+                placeholder_db: 'hotel_db'
+            }
+        };        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, initializing...');
+            
+            // Make functions global immediately
+            window.testConnection = testConnection;
+            window.connectDatabase = connectDatabase;
+            window.showConnectionModal = showConnectionModal;
+            window.showSavedConnections = showSavedConnections;
+            window.updateConnectionForm = updateConnectionForm;
+            window.toggleTheme = toggleTheme;
+            window.executeQuery = executeQuery;
+            window.formatSQL = formatSQL;
+            window.clearEditor = clearEditor;
+            window.getConnectionConfig = getConnectionConfig;
+            window.showAlert = showAlert;
+            
+            console.log('All functions made global');
+            
+            initializeCodeMirror();
+            testAPI();
+            updateConnectionForm();
+            
+            console.log('Initialization complete - functions should work now');
+        });
+
+        function initializeCodeMirror() {
+            try {
+                sqlEditor = CodeMirror.fromTextArea(document.getElementById('sql-editor-textarea'), {
+                    mode: 'text/x-sql',
+                    theme: 'default',
+                    lineNumbers: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    indentWithTabs: true,
+                    smartIndent: true,
+                    lineWrapping: true
+                });
+                console.log('CodeMirror initialized');
+            } catch (error) {
+                console.error('CodeMirror initialization failed:', error);
+            }
+        }
+
+        function testAPI() {
+            console.log('Testing API connection...');
+            fetch(`${API_BASE}?action=test`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Test Success:', data);
+                    if (data.success) {
+                        // PDO drivers kontrolü
+                        const drivers = data.pdo_drivers || [];
+                        console.log('Available PDO drivers:', drivers);
+                        
+                        if (!drivers.includes('pgsql')) {
+                            showAlert('⚠️ PostgreSQL PDO driver not found. Please use MySQL instead.', 'warning');
+                            // PostgreSQL seçeneğini devre dışı bırak
+                            const pgOption = document.querySelector('#db-type option[value="postgresql"]');
+                            if (pgOption) {
+                                pgOption.disabled = true;
+                                pgOption.textContent += ' (Not Available)';
+                            }
+                            // MySQL'i varsayılan yap
+                            document.getElementById('db-type').value = 'mysql';
+                            updateConnectionForm();
+                        }
+                        
+                        addLog(`API bağlantısı başarılı - Server: ${data.server}, PHP: ${data.php_version}`);
+                        addLog(`Available drivers: ${drivers.join(', ')}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('API Test Failed:', error);
+                    showAlert(`API bağlantı hatası: ${error.message}`, 'danger');
+                    addLog(`API bağlantı hatası: ${error.message}`);
+                });
+        }
+
+        // Modal functions
+        function showConnectionModal() {
+            console.log('Opening connection modal...');
+            const modal = new bootstrap.Modal(document.getElementById('connectionModal'));
+            modal.show();
+        }
+
+        function showSavedConnections() {
+            console.log('Showing saved connections...');
+            alert('Saved connections feature will be implemented');
+        }
+
+        function updateConnectionForm() {
+            const dbType = document.getElementById('db-type').value;
+            const serverFields = document.getElementById('server-fields');
+            const sqliteFields = document.getElementById('sqlite-fields');
+            const mongoFields = document.getElementById('mongodb-fields');
+            
+            // Hide all fields initially
+            if (serverFields) serverFields.style.display = 'none';
+            if (sqliteFields) sqliteFields.style.display = 'none';
+            if (mongoFields) mongoFields.style.display = 'none';
+            
+            const config = dbConfigs[dbType];
+            
+            if (dbType === 'sqlite') {
+                if (sqliteFields) sqliteFields.style.display = 'block';
+            } else if (dbType === 'mongodb') {
+                if (serverFields) serverFields.style.display = 'none';
+                if (mongoFields) mongoFields.style.display = 'block';
+            } else {
+                // Update port and username defaults for server-based databases
+                const portField = document.getElementById('db-port');
+                const usernameField = document.getElementById('db-username');
+                const databaseField = document.getElementById('db-name');
+                
+                if (portField) portField.value = config.port;
+                if (usernameField) usernameField.value = config.username;
+                if (databaseField) databaseField.placeholder = config.placeholder_db;
+            }
+
+            hideConnectionError();
+            console.log(`Updated form for ${config.name}: port=${config.port}, username=${config.username}`);
+        }
+
+        function updateConnectionNameSuggestion() {
+            const dbType = document.getElementById('db-type').value;
+            const config = dbConfigs[dbType];
+            
+            if (!config) return;
+            
+            const host = document.getElementById('db-host')?.value || 'localhost';
+            const database = document.getElementById('db-name')?.value || 
+                            document.getElementById('db-name')?.placeholder ||
+                            (document.getElementById('sqlite-file')?.value || '').split('\\').pop().split('.')[0] ||
+                            'default';
+            
+            const nameField = document.getElementById('conn-name');
+            
+            if (nameField && !nameField.value) {
+                nameField.placeholder = `${config.name} - ${host}/${database}`;
+            }
+        }
+
+        function updateSetupGuide(config) {
+            const guideElement = document.getElementById('setup-guide');
+            
+            if (!guideElement) return;
+            
+            let html = `<h6><i class="fas fa-info-circle"></i> ${config.setup_guide.title}</h6>`;
+            html += '<ol>';
+            config.setup_guide.steps.forEach(step => {
+                html += `<li>${step}</li>`;
+            });
+            html += '</ol>';
+            
+            guideElement.innerHTML = html;
+        }
+
+        function updateConnectionPreview() {
+            const dbType = document.getElementById('db-type').value;
+            const previewElement = document.getElementById('preview-text');
+            
+            if (!previewElement) return;
+            
+            let preview = '';
+            
+            switch(dbType) {
+                case 'mysql':
+                    const mysqlHost = document.getElementById('db-host')?.value || 'localhost';
+                    const mysqlPort = document.getElementById('db-port')?.value || '3306';
+                    const mysqlDb = document.getElementById('db-name')?.value || 'hotel_db';
+                    const mysqlUser = document.getElementById('db-username')?.value || 'root';
+                    preview = `mysql://${mysqlUser}@${mysqlHost}:${mysqlPort}/${mysqlDb}`;
+                    break;
+                    
+                case 'postgresql':
+                    const pgHost = document.getElementById('db-host')?.value || 'localhost';
+                    const pgPort = document.getElementById('db-port')?.value || '5432';
+                    const pgDb = document.getElementById('db-name')?.value || 'hotel_db';
+                    const pgUser = document.getElementById('db-username')?.value || 'postgres';
+                    preview = `postgresql://${pgUser}@${pgHost}:${pgPort}/${pgDb}`;
+                    break;
+                    
+                case 'sqlite':
+                    const sqliteFile = document.getElementById('sqlite-file')?.value || 'C:\\path\\to\\database.db';
+                    preview = `sqlite:///${sqliteFile}`;
+                    break;
+                    
+                case 'mssql':
+                    const mssqlHost = document.getElementById('db-host')?.value || 'localhost';
+                    const mssqlPort = document.getElementById('db-port')?.value || '1433';
+                    const mssqlDb = document.getElementById('db-name')?.value || 'hotel_db';
+                    const mssqlUser = document.getElementById('db-username')?.value || 'sa';
+                    preview = `sqlserver://${mssqlUser}@${mssqlHost}:${mssqlPort}/${mssqlDb}`;
+                    break;
+                    
+                case 'mongodb':
+                    const mongoUri = document.getElementById('mongodb-uri')?.value || 'mongodb://localhost:27017/hotel_db';
+                    preview = mongoUri;
+                    break;
+            }
+            
+            previewElement.textContent = preview;
+            updateConnectionNameSuggestion();
+        }        function loadDatabaseInfo() {
+            if (!isConnected) {
+                console.log('Not connected, skipping database info load');
+                return;
+            }
+
+            console.log('Loading database info...');
+            
+            setTimeout(() => {
+                fetch(`${API_BASE}?action=database-info`)
+                    .then(response => {
+                        console.log('Database info response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Database info response:', data);
+                        if (data.success) {
+                            updateDatabaseStats(data.data);
+                            showAlert('Database stats loaded', 'success');
+                        } else {
+                            console.error('Database info failed:', data.message);
+                            if (data.reconnect_needed) {
+                                updateDatabaseStats({ table_count: 'Reconnect', size: 'Required', active_connections: '!' });
+                                showAlert('Session expired. Please reconnect to see statistics.', 'warning');
+                            } else {
+                                updateDatabaseStats({ table_count: '?', size: '?', active_connections: '?' });
+                                showAlert('Failed to load database info: ' + data.message, 'warning');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Database info error:', error);
+                        updateDatabaseStats({ table_count: 'Error', size: 'Loading', active_connections: '!' });
+                        showAlert('Error loading database info: ' + error.message, 'danger');
+                    });
+            }, 1000);
+        }
+
+        function updateDatabaseStats(info) {
+            console.log('Updating database stats:', info);
+            
+            const tableCountEl = document.getElementById('table-count');
+            const dbSizeEl = document.getElementById('db-size');
+            const activeConnEl = document.getElementById('active-connections');
+            
+            if (tableCountEl) tableCountEl.textContent = info.table_count || '0';
+            if (dbSizeEl) dbSizeEl.textContent = info.size || '0 MB';
+            if (activeConnEl) activeConnEl.textContent = info.active_connections || '1';
+        }
+
+        function getConnectionConfig() {
+            const dbType = document.getElementById('db-type').value;
+            
+            console.log('Getting connection config for:', dbType);
+            
+            const config = {
+                name: document.getElementById('conn-name').value || document.getElementById('conn-name').placeholder || 'Test Connection',
+                type: dbType
+            };
+
+            if (dbType === 'sqlite') {
+                config.database_file = document.getElementById('sqlite-file').value;
+                if (!config.database_file) {
+                    showAlert('Please enter SQLite database file path', 'warning');
+                    return null;
+                }
+            } else if (dbType === 'mongodb') {
+                config.connection_string = document.getElementById('mongodb-uri').value;
+                if (!config.connection_string) {
+                    showAlert('Please enter MongoDB connection string', 'warning');
+                    return null;
+                }
+            } else {
+                config.host = document.getElementById('db-host').value || 'localhost';
+                config.port = document.getElementById('db-port').value;
+                config.database = document.getElementById('db-name').value;
+                config.username = document.getElementById('db-username').value;
+                config.password = document.getElementById('db-password').value || '';
+
+                if (!config.database || !config.username) {
+                    showAlert('Please fill in Database Name and Username', 'warning');
+                    return null;
+                }
+            }
+
+            console.log('Generated config:', config);
+            return config;
+        }
+
+        function showConnectionError(message) {
+            const errorDiv = document.getElementById('connection-error');
+            const errorMessage = document.getElementById('error-message');
+            
+            if (errorDiv && errorMessage) {
+                errorMessage.innerHTML = message.replace(/\n/g, '<br>');
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function hideConnectionError() {
+            const errorDiv = document.getElementById('connection-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        function updateConnectionStatus(connected, config = null, serverInfo = null) {
+            const indicator = document.getElementById('connection-indicator');
+            const status = document.getElementById('connection-status');
+            const serverInfoElement = document.getElementById('server-info');
+            const dbTypeDisplay = document.getElementById('db-type-display');
+
+            if (connected && config) {
+                if (indicator) indicator.className = 'status-indicator status-online';
+                if (status) status.textContent = 'Connected';
+                if (serverInfoElement) serverInfoElement.textContent = serverInfo || `${config.type.toUpperCase()} - ${config.host || 'Local'}`;
+                if (dbTypeDisplay) dbTypeDisplay.textContent = config.type.toUpperCase();
+            } else {
+                if (indicator) indicator.className = 'status-indicator status-offline';
+                if (status) status.textContent = 'Not Connected';
+                if (serverInfoElement) serverInfoElement.textContent = '-';
+                if (dbTypeDisplay) dbTypeDisplay.textContent = '-';
+                
+                // Reset stats
+                const tableCount = document.getElementById('table-count');
+                const dbSize = document.getElementById('db-size');
+                const activeConnections = document.getElementById('active-connections');
+                
+                if (tableCount) tableCount.textContent = '-';
+                if (dbSize) dbSize.textContent = '-';
+                if (activeConnections) activeConnections.textContent = '-';
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            console.log(`Alert [${type}]:`, message);
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            
+            const themeIcon = document.getElementById('theme-icon');
+            if (themeIcon) {
+                themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+            
+            console.log('Theme changed to:', currentTheme);
+        }
+
+        function executeQuery() {
+            console.log('Execute query clicked');
+            if (!isConnected) {
+                showAlert('Please connect to a database first', 'warning');
+                return;
+            }
+            showAlert('Query execution will be implemented soon', 'info');
+        }
+
+        function formatSQL() {
+            console.log('Format SQL clicked');
+            const editor = document.getElementById('sql-editor-textarea');
+            if (editor) {
+                let sql = editor.value;
+                sql = sql.replace(/\bSELECT\b/gi, '\nSELECT')
+                        .replace(/\bFROM\b/gi, '\nFROM')
+                        .replace(/\bWHERE\b/gi, '\nWHERE')
+                        .replace(/\bORDER BY\b/gi, '\nORDER BY')
+                        .replace(/\bGROUP BY\b/gi, '\nGROUP BY')
+                        .trim();
+                editor.value = sql;
+                showAlert('SQL formatted', 'info');
+            }
+        }
+
+        function clearEditor() {
+            console.log('Clear editor clicked');
+            const editor = document.getElementById('sql-editor-textarea');
+            if (editor && confirm('Are you sure you want to clear the editor?')) {
+                editor.value = '';
+                showAlert('Editor cleared', 'info');
+            }
+        }
+
+        // ...existing code...
+    </script>
+</body>
+</html>

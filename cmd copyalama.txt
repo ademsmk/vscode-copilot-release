@@ -1,0 +1,35 @@
+# Komut İstemini Yönetici olarak çalıştırın
+cd /d D:\otelyzlm\Hotel Yonetim
+
+# Tüm projeyi kopyala
+xcopy "D:\otelyzlm\Hotel Yonetim" "C:\wamp64\www\apphotel" /E /I /H /Y
+
+# Veya robocopy kullanın (daha güvenilir)
+robocopy "D:\otelyzlm\Hotel Yonetim" "C:\wamp64\www\apphotel" /E /COPYALL /R:3 /W:5
+***********************************************************************
+Ana Sayfa:          http://localhost/apphotel/
+Admin Panel:        http://localhost/apphotel/admin/
+Housekeeping:       http://localhost/apphotel/housekeeping/
+Database Yönetimi:  http://localhost/apphotel/admin/database-management.html
+API Test:           http://localhost/apphotel/api/database.php?action=info
+
+# Dosya yapısını kontrol et
+dir /s
+
+# WAMP'ın çalışıp çalışmadığını test et
+curl http://localhost/apphotel/backend/api/database.php?action=info
+
+--------------------------------------------------------------
+ Visual Studio Code Workspace Ayarları
+// .vscode/settings.json
+{
+    "php.executablePath": "C:\\wamp64\\bin\\php\\php8.2.13\\php.exe",
+    "php.validate.executablePath": "C:\\wamp64\\bin\\php\\php8.2.13\\php.exe",
+    "liveServer.settings.root": "/frontend",
+    "liveServer.settings.CustomBrowser": "chrome",
+    "liveServer.settings.port": 5500,
+    "files.associations": {
+        "*.php": "php",
+        "*.html": "html"
+    }
+}

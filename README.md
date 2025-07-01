@@ -1,124 +1,107 @@
-# 🏨 Kapsamlı Otel Yönetim Sistemi (PMS) - Geliştirme Planı
+# Otel Yönetim Sistemi
 
-## 📋 Proje Genel Bakış
-Tam kapsamlı bir otel yönetim sistemi geliştirilecek. Sistem resepsiyon işlemlerinden faturalama süreçlerine kadar tüm otel operasyonlarını kapsayacak.
+Modern, dinamik ve profesyonel otel yönetim sistemi. PostgreSQL veritabanı ile tam entegre çalışır.
 
+## Özellikler
 
-## 🎯 Sistem Modülleri
+- **Room Rack**: Dinamik oda durumu ve yönetimi
+- **Check-In/Check-Out**: Otomatik rezervasyon işlemleri
+- **Rezervasyon Yönetimi**: Dinamik rezervasyon oluşturma, düzenleme ve takibi
+- **Personel Yönetimi**: Tam CRUD işlemleri ile personel yönetimi
+- **Dashboard**: Gerçek zamanlı istatistikler ve raporlar
+- **Housekeeping**: Temizlik görevleri yönetimi
+- **Maintenance**: Bakım talepleri yönetimi
 
-### 1. 🏢 Resepsiyon Modülü
-- **Check-in/Check-out** işlemleri
-- **Rezervasyon** yönetimi
-- **Oda ataması** ve durum takibi
-- **Misafir kaydı** ve kimlik kontrolü
-- **Ön rezervasyon** işlemleri
+## Kurulum
 
-### 2. 🛏️ Oda Yönetimi
-- **Room Rack** (Oda durumu görüntüleme)
-- **Oda tipleri** yönetimi (Standart, Deluxe, Suite)
-- **Housekeeping** durumu (Temiz, Kirli, Maintenance)
-- **Oda özellikleri** (Deniz manzarası, Balkon, vs.)
-- **Oda fiyatlandırması** (Sezon, Özel günler)
+### 1. Gereksinimler
+- PHP 7.4 veya üzeri
+- PostgreSQL 12 veya üzeri
+- Web server (Apache/Nginx) veya PHP built-in server
 
-### 3. 💰 Ön Kasa & Faturalama
-- **Folyo yönetimi** (Ana folyo, Ekstra folyo)
-- **Faturalama sistemi** (Departman bazlı)
-- **Ödeme işlemleri** (Nakit, Kredi kartı, Borç)
-- **Tahsilat takibi**
-- **Fatura yazdırma**
+### 2. Veritabanı Kurulumu
+```bash
+# PostgreSQL'e bağlan
+psql -U postgres
 
-### 4. 👥 Misafir Yönetimi
-- **Misafir profili** oluşturma
-- **Kimlik bilgileri** kaydetme
-- **İletişim bilgileri** yönetimi
-- **Misafir geçmişi** tracking
-- **VIP misafir** yönetimi
+# Veritabanı oluştur
+CREATE DATABASE hotelyonetim;
 
-### 5. 📞 İletişim & Mesajlaşma
-- **Misafir mesajları** sistemi
-- **İç komunikasyon** (Departmanlar arası)
-- **Rezervasyon notları**
-- **Özel talepler** kaydetme
+# Veritabanına geç
+\c hotelyonetim
 
-### 6. 🔐 Güvenlik & Emniyet
-- **Emniyet bildirimleri** sistemi
-- **Güvenlik raporları**
-- **Otel güvenlik** protokolleri
-- **Acil durum** yönetimi
+# Şemayı yükle
+\i database/postgresql_tables.sql
+\i database/reservations_table.sql
+\i database/staff_table.sql
+\i database/housekeeping_tables.sql
+\i database/maintenance_requests_table.sql
 
-### 7. 📊 Raporlama & Analiz
-- **Doluluk oranları**
-- **Gelir analizleri**  
-- **Departman bazlı raporlar**
-- **Müşteri analizi**
-- **Performans raporları**
-
-## 🛠️ Teknik Detaylar
-
-### Frontend
-- **HTML5, CSS3, JavaScript, jQuery**
-- **Responsive design** (Mobil uyumlu)
-- **Modern UI/UX** tasarımı
-- **Ajax** işlemleri
-
-### Backend  
-- **PHP 8.x** 
-- **PostgreSQL** veritabanı
-- **RESTful API** yapısı
-- **Session** yönetimi
-
-### Güvenlik
-- **Kullanıcı kimlik doğrulama**
-- **Yetkilendirme** sistemi
-- **Veri şifreleme**
-- **Audit log** sistemi
-
-## 📁 Proje Yapısı
+# Örnek verileri yükle
+\i database/rooms_data.sql
+\i database/housekeeping_tasks.sql
 ```
-hotel-yonetim/
-├── frontend/
-│   ├── assets/ (CSS, JS, Images)
-│   ├── pages/ (HTML sayfaları)
-│   └── admin/ (Yönetim paneli)
+
+### 3. Konfigürasyon
+`backend/config/database.php` dosyasındaki veritabanı ayarlarını güncelleyin:
+
+```php
+private $host = "localhost";
+private $db_name = "hotelyonetim";
+private $username = "postgres";
+private $password = "your_password";
+```
+
+### 4. Sunucu Başlatma
+```bash
+# PHP built-in server
+php -S localhost:8080
+
+# Veya Apache/Nginx kullanın
+```
+
+### 5. Erişim
+- Ana sayfa: `http://localhost:8080/frontend/pages/index.html`
+- Room Rack: `http://localhost:8080/frontend/pages/room-rack.html`
+- Rezervasyonlar: `http://localhost:8080/frontend/pages/reservations.html`
+- Personel: `http://localhost:8080/frontend/pages/staff-management.html`
+
+## Klasör Yapısı
+
+```
+hotel-yonetim-sistemi/
 ├── backend/
-│   ├── api/ (REST endpoints)
-│   ├── config/ (Veritabanı config)
-│   ├── models/ (Veri modelleri)
-│   └── controllers/ (İş mantığı)
-├── database/
-│   ├── schema.sql (Veritabanı şeması)
-│   └── migrations/ (Veritabanı güncellemeleri)
-└── docs/ (Dokümantasyon)
+│   ├── api/              # REST API endpoints
+│   ├── config/           # Veritabanı konfigürasyonu
+│   ├── controllers/      # İş mantığı kontrolcüleri
+│   └── models/           # Veritabanı modelleri
+├── frontend/
+│   ├── pages/            # HTML sayfaları
+│   └── assets/
+│       ├── css/          # Stil dosyaları
+│       └── js/           # JavaScript dosyaları
+└── database/             # SQL şema ve örnek veriler
 ```
 
-## 🚀 Geliştirme Aşamaları
+## Teknolojiler
 
-### Aşama 1: Temel Yapı
-- [ ] Proje klasör yapısı oluştur
-- [ ] Veritabanı şeması tasarla
-- [ ] Temel PHP framework kurulumu
+- **Backend**: PHP 7.4+, PostgreSQL
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+), Bootstrap 5
+- **API**: RESTful JSON API
+- **Database**: PostgreSQL
 
-### Aşama 2: Resepsiyon Modülü
-- [ ] Check-in/Check-out sayfaları
-- [ ] Rezervasyon yönetimi
-- [ ] Oda ataması sistemi
+## Geliştirici Notları
 
-### Aşama 3: Oda & Faturalama
-- [ ] Room Rack görünümü
-- [ ] Folyo yönetimi
-- [ ] Faturalama sistemi
+- Tüm veriler PostgreSQL veritabanından dinamik olarak yüklenir
+- API endpoint'leri `/backend/api/` klasöründe bulunur
+- Frontend JavaScript dosyaları modüler yapıdadır
+- Bootstrap 5 ve Font Awesome kullanılır
 
-### Aşama 4: Entegrasyon & Test
-- [ ] Modüller arası entegrasyon
-- [ ] Test süreçleri
-- [ ] Güvenlik testleri
+## Lisans
 
-## 🎨 Tasarım Konsepti
-- **Profesyonel** görünüm
-- **Kullanıcı dostu** arayüz
-- **Hızlı erişim** butonları
-- **Renk kodlu** durum göstergeleri
-- **Responsive** tasarım
+Bu proje özel kullanım içindir.
 
-## 📞 İletişim ve Feedback
-Proje geliştirme sürecinde düzenli olarak feedback alınacak ve özellikler ihtiyaçlara göre güncellenecek.
+## İletişim
+
+Geliştirici: ADEM SAMUK
+Email: ademsmk@users.noreply.github.com

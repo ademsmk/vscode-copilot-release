@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Management - Working Version</title>
+    
+    <!-- External Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        [data-theme="dark"] {
+            --background-color: #1a1a1a;
+            --surface-color: #2d2d2d;
+            --text-color: #ffffff;
+        }
+
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .main-container {
+            background: var(--background-color);
+            min-height: 100vh;
+        }
+
+        .header-bar {
+            background: var(--surface-color);
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: var(--surface-color);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online { background: var(--success-color); }
+        .status-offline { background: var(--danger-color); }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        .modal-content {
+            background: var(--surface-color) !important;
+            color: var(--text-color) !important;
+        }
+
+        .form-control, .form-select {
+            background: var(--surface-color);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-color);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: var(--surface-color);
+            border-color: var(--primary-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <div class="main-container">
+        <div class="header-bar">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h1 class="mb-0"><i class="fas fa-database"></i> Database Management</h1>
+                        <small class="text-muted">Hotel Management System</small>
+                    </div>                    <div class="col-md-4 text-center">
+                        <button class="btn btn-primary btn-sm me-2" onclick="showConnectionModal()">
+                            <i class="fas fa-plug"></i> Connect Database
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="manualLoadDatabaseInfo()" id="load-info-btn" style="display: none;">
+                            <i class="fas fa-sync"></i> Reload Info
+                        </button>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="status-indicator status-offline" id="connection-indicator"></span>
+                        <span id="connection-status">Not Connected</span>
+                        <span class="ms-3">Server: <strong id="server-info">-</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Real-time Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-table fa-2x text-primary mb-2"></i>
+                        <h3 id="table-count">-</h3>
+                        <p class="mb-0">Total Tables</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-database fa-2x text-success mb-2"></i>
+                        <h3 id="db-size">-</h3>
+                        <p class="mb-0">Database Size</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                        <h3 id="active-connections">-</h3>
+                        <p class="mb-0">Active Connections</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-server fa-2x text-info mb-2"></i>
+                        <h3 id="db-type-display">-</h3>
+                        <p class="mb-0">Database Type</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SQL Editor -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="stats-card">
+                        <h4><i class="fas fa-code"></i> SQL Query Editor</h4>
+                        <textarea id="sql-editor" class="form-control" rows="10" placeholder="-- Enter your SQL query here...
+SELECT * FROM table_name LIMIT 10;"></textarea>
+                        <div class="mt-3">
+                            <button class="btn btn-success" onclick="executeQuery()">
+                                <i class="fas fa-play"></i> Execute Query
+                            </button>
+                            <button class="btn btn-info" onclick="formatSQL()">
+                                <i class="fas fa-magic"></i> Format
+                            </button>
+                            <button class="btn btn-warning" onclick="clearEditor()">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Query Results -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="stats-card" id="query-results" style="display: none;">
+                        <h5><i class="fas fa-table"></i> Query Results</h5>
+                        <div id="results-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Connection Modal -->
+    <div class="modal fade" id="connectionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-database"></i> Database Connection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="connectionForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Connection Name</label>
+                                <input type="text" class="form-control" id="conn-name" placeholder="My Database">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Database Type</label>
+                                <select class="form-select" id="db-type">
+                                    <option value="mysql">MySQL</option>
+                                    <option value="postgresql">PostgreSQL</option>
+                                    <option value="sqlite">SQLite</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="server-fields">
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Host/Server</label>
+                                    <input type="text" class="form-control" id="db-host" value="localhost">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Port</label>
+                                    <input type="number" class="form-control" id="db-port" value="3306">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Database Name</label>
+                                <input type="text" class="form-control" id="db-name" placeholder="hotel_db">
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="db-username" value="root">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="db-password">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="connection-error" class="alert alert-danger" style="display: none;">
+                            <strong>Connection Error:</strong>
+                            <div id="error-message"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="test-connection-btn">
+                        <i class="fas fa-vial"></i> Test Connection
+                    </button>
+                    <button type="button" class="btn btn-success" id="connect-database-btn">
+                        <i class="fas fa-plug"></i> Connect
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // ===========================================
+        // JAVASCRIPT INITIALIZATION
+        // ===========================================
+        console.log('=== JavaScript Starting ===');
+        
+        // Global variables
+        let currentTheme = 'light';
+        let currentConnection = null;
+        let isConnected = false;
+        const API_BASE = 'backend/api/database-management-pro.php';
+
+        console.log('Variables initialized');
+        console.log('API_BASE:', API_BASE);
+
+        // Database configurations
+        const dbConfigs = {
+            mysql: { port: 3306, username: 'root' },
+            postgresql: { port: 5432, username: 'postgres' },
+            sqlite: { port: 0, username: '' }
+        };
+
+        // ===========================================
+        // INITIALIZATION FUNCTIONS
+        // ===========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            // Add event listeners
+            setupEventListeners();
+            
+            // Test API
+            testAPI();
+            
+            // Update form
+            updateConnectionForm();
+            
+            console.log('Initialization complete');
+        });
+
+        function setupEventListeners() {
+            console.log('Setting up event listeners...');
+            
+            // Connection buttons
+            const testBtn = document.getElementById('test-connection-btn');
+            const connectBtn = document.getElementById('connect-database-btn');
+            
+            if (testBtn) {
+                testBtn.addEventListener('click', testConnection);
+                console.log('Test button event listener added');
+            } else {
+                console.error('Test button not found!');
+            }
+            
+            if (connectBtn) {
+                connectBtn.addEventListener('click', connectDatabase);
+                console.log('Connect button event listener added');
+            } else {
+                console.error('Connect button not found!');
+            }
+            
+            // Database type change
+            const dbTypeSelect = document.getElementById('db-type');
+            if (dbTypeSelect) {
+                dbTypeSelect.addEventListener('change', updateConnectionForm);
+                console.log('Database type selector event listener added');
+            }
+        }
+
+        // ===========================================
+        // API FUNCTIONS
+        // ===========================================
+        function testAPI() {
+            console.log('Testing API connection...');
+            
+            fetch(`${API_BASE}?action=test`)
+                .then(response => {
+                    console.log('API Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Test Success:', data);
+                    showAlert('✅ API connection successful', 'success');
+                })
+                .catch(error => {
+                    console.error('API Test Failed:', error);
+                    showAlert('❌ API connection failed: ' + error.message, 'danger');
+                });
+        }
+
+        function testConnection() {
+            console.log('=== TEST CONNECTION CLICKED ===');
+            
+            const config = getConnectionConfig();
+            if (!config) {
+                console.log('Config validation failed');
+                showAlert('Please fill in all required fields', 'warning');
+                return;
+            }
+
+            const testBtn = document.getElementById('test-connection-btn');
+            const originalText = testBtn.innerHTML;
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+            testBtn.disabled = true;
+
+            hideConnectionError();
+            
+            console.log('Sending test request:', config);
+
+            fetch(`${API_BASE}?action=test-connection`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => {
+                console.log('Test Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                console.log('Raw test response:', text);
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed test response:', data);
+                    
+                    if (data.success) {
+                        showAlert('✅ Connection test successful!', 'success');
+                        if (data.server_info) {
+                            showAlert(`Server: ${data.server_info}`, 'info');
+                        }
+                    } else {
+                        showConnectionError(data.message);
+                        showAlert('❌ Connection test failed: ' + data.message, 'danger');
+                    }
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    showConnectionError('Invalid server response: ' + text);
+                    showAlert('❌ Server response error', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Connection Test Error:', error);
+                showConnectionError('Network error: ' + error.message);
+                showAlert('❌ Connection test failed: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                testBtn.innerHTML = originalText;
+                testBtn.disabled = false;
+            });
+        }
+
+        function connectDatabase() {
+            console.log('=== CONNECT DATABASE CLICKED ===');
+            
+            const config = getConnectionConfig();
+            if (!config) {
+                console.log('Config validation failed');
+                showAlert('Please fill in all required fields', 'warning');
+                return;
+            }
+
+            const connectBtn = document.getElementById('connect-database-btn');
+            const originalText = connectBtn.innerHTML;
+            connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            connectBtn.disabled = true;
+
+            hideConnectionError();
+            
+            console.log('Sending connect request:', config);
+
+            fetch(`${API_BASE}?action=connect-database`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => {
+                console.log('Connect Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                console.log('Raw connect response:', text);
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed connect response:', data);
+                    
+                    if (data.success) {
+                        currentConnection = data.connection_id;
+                        isConnected = true;
+                        updateConnectionStatus(true, config, data.server_info);
+                        showAlert('✅ Database connected successfully!', 'success');
+                        
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('connectionModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        loadDatabaseInfo();
+                    } else {
+                        showConnectionError(data.message);
+                        showAlert('❌ Connection failed: ' + data.message, 'danger');
+                    }
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    showConnectionError('Invalid server response: ' + text);
+                    showAlert('❌ Server response error', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Database Connect Error:', error);
+                showConnectionError('Network error: ' + error.message);
+                showAlert('❌ Connection failed: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                connectBtn.innerHTML = originalText;
+                connectBtn.disabled = false;
+            });
+        }
+
+        // ===========================================
+        // HELPER FUNCTIONS
+        // ===========================================
+        function getConnectionConfig() {
+            const dbType = document.getElementById('db-type').value;
+            
+            const config = {
+                name: document.getElementById('conn-name').value || 'Test Connection',
+                type: dbType,
+                host: document.getElementById('db-host').value || 'localhost',
+                port: document.getElementById('db-port').value,
+                database: document.getElementById('db-name').value,
+                username: document.getElementById('db-username').value,
+                password: document.getElementById('db-password').value || ''
+            };
+
+            if (!config.database || !config.username) {
+                return null;
+            }
+
+            console.log('Generated config:', config);
+            return config;
+        }
+
+        function updateConnectionForm() {
+            const dbType = document.getElementById('db-type').value;
+            const config = dbConfigs[dbType];
+            
+            if (config) {
+                document.getElementById('db-port').value = config.port;
+                document.getElementById('db-username').value = config.username;
+                console.log(`Updated form for ${dbType}: port=${config.port}, username=${config.username}`);
+            }
+        }
+
+        function showConnectionModal() {
+            console.log('Opening connection modal...');
+            const modal = new bootstrap.Modal(document.getElementById('connectionModal'));
+            modal.show();
+        }
+
+        function showConnectionError(message) {
+            const errorDiv = document.getElementById('connection-error');
+            const errorMessage = document.getElementById('error-message');
+            
+            if (errorDiv && errorMessage) {
+                errorMessage.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function hideConnectionError() {
+            const errorDiv = document.getElementById('connection-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }        function updateConnectionStatus(connected, config = null, serverInfo = null) {
+            const indicator = document.getElementById('connection-indicator');
+            const status = document.getElementById('connection-status');
+            const serverInfoElement = document.getElementById('server-info');
+            const dbTypeDisplay = document.getElementById('db-type-display');
+            const loadInfoBtn = document.getElementById('load-info-btn');
+
+            if (connected && config) {
+                indicator.className = 'status-indicator status-online';
+                status.textContent = 'Connected';
+                serverInfoElement.textContent = serverInfo || `${config.type.toUpperCase()} - ${config.host}`;
+                dbTypeDisplay.textContent = config.type.toUpperCase();
+                
+                // Show reload info button
+                if (loadInfoBtn) {
+                    loadInfoBtn.style.display = 'inline-block';
+                }
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                status.textContent = 'Not Connected';
+                serverInfoElement.textContent = '-';
+                dbTypeDisplay.textContent = '-';
+                
+                // Hide reload info button
+                if (loadInfoBtn) {
+                    loadInfoBtn.style.display = 'none';
+                }
+            }
+        }
+
+        function manualLoadDatabaseInfo() {
+            console.log('Manual database info load triggered');
+            loadDatabaseInfo();
+        }function loadDatabaseInfo() {
+            console.log('Loading database info...');
+            
+            if (!isConnected) {
+                console.log('Not connected, skipping database info load');
+                return;
+            }
+
+            // 2 saniye bekle ki bağlantı tam olarak kurulsun
+            setTimeout(() => {
+                fetch(`${API_BASE}?action=database-info`)
+                    .then(response => {
+                        console.log('Database info response status:', response.status);
+                        console.log('Database info response headers:', [...response.headers.entries()]);
+                        
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                console.error('Database info error response:', text);
+                                throw new Error(`HTTP ${response.status}: ${text}`);
+                            });
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        console.log('Raw database info response:', text);
+                        try {
+                            const data = JSON.parse(text);
+                            console.log('Parsed database info response:', data);
+                            
+                            if (data.success) {
+                                updateDatabaseStats(data.data);
+                                showAlert('Database info loaded successfully', 'success');
+                            } else {
+                                console.error('Database info failed:', data.message);
+                                showAlert('Failed to load database info: ' + data.message, 'warning');
+                                // Set default values
+                                updateDatabaseStats({
+                                    table_count: '?',
+                                    size: '?',
+                                    active_connections: '?'
+                                });
+                            }
+                        } catch (parseError) {
+                            console.error('JSON parse error:', parseError);
+                            showAlert('Database info response parse error', 'danger');
+                            // Set default values
+                            updateDatabaseStats({
+                                table_count: '?',
+                                size: '?',
+                                active_connections: '?'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Database info error:', error);
+                        showAlert('Error loading database info: ' + error.message, 'danger');
+                        // Set default values
+                        updateDatabaseStats({
+                            table_count: '?',
+                            size: '?',
+                            active_connections: '?'
+                        });
+                    });
+            }, 2000);
+        }
+
+        function updateDatabaseStats(info) {
+            console.log('Updating database stats:', info);
+            
+            // Update table count
+            const tableCountEl = document.getElementById('table-count');
+            if (tableCountEl) {
+                tableCountEl.textContent = info.table_count || '0';
+            }
+            
+            // Update database size
+            const dbSizeEl = document.getElementById('db-size');
+            if (dbSizeEl) {
+                dbSizeEl.textContent = info.size || '0 MB';
+            }
+            
+            // Update active connections
+            const activeConnEl = document.getElementById('active-connections');
+            if (activeConnEl) {
+                activeConnEl.textContent = info.active_connections || '1';
+            }
+            
+            console.log('Database stats updated successfully');
+        }
+
+        function showAlert(message, type = 'info') {
+            console.log(`Alert [${type}]:`, message);
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // ===========================================
+        // THEME FUNCTIONS
+        // ===========================================
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            
+            const themeIcon = document.getElementById('theme-icon');
+            themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            
+            console.log('Theme changed to:', currentTheme);
+        }
+
+        // ===========================================
+        // SQL EDITOR FUNCTIONS
+        // ===========================================
+        function executeQuery() {
+            console.log('Execute query clicked');
+            showAlert('Query execution will be implemented soon', 'info');
+        }
+
+        function formatSQL() {
+            console.log('Format SQL clicked');
+            const editor = document.getElementById('sql-editor');
+            if (editor) {
+                editor.value = editor.value.trim();
+            }
+        }
+
+        function clearEditor() {
+            console.log('Clear editor clicked');
+            const editor = document.getElementById('sql-editor');
+            if (editor && confirm('Are you sure you want to clear the editor?')) {
+                editor.value = '';
+            }
+        }
+
+        // Test functions are working
+        console.log('=== All functions loaded ===');
+    </script>
+</body>
+</html>
